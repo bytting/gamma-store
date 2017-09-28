@@ -1,7 +1,7 @@
 drop database gs;
 create database gs;
 
-\c gs
+\c gs;
 
 create sequence session_id;
 

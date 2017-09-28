@@ -21,23 +21,67 @@ package main
 
 import (
     "log"
+    "io/ioutil"
+    "encoding/json"
     "database/sql"
     _ "github.com/lib/pq"
     "github.com/gin-gonic/gin"
 )
 
-func ping(c *gin.Context) {
-    c.JSON(200, "pong")
+type DetectorData struct {
+    TypeName string `json:"type_name"`
+    SerialNumber string `json:"serialnumber"`
+}
+
+type Session struct {
+    Name string `json:"name"`
+    Comment string `json:"comment"`
+    *DetectorData `json:"detector_data"`
+}
+
+func addSession(c *gin.Context) {
+
+    body, err := ioutil.ReadAll(c.Request.Body)
+    if err != nil {
+        log.Print(err)
+        return
+    }
+
+    session := new(Session)
+    err = json.Unmarshal(body, session)
+    if err != nil {
+        log.Print(err)
+        return
+    }
+
+    c.JSON(200, session)
+}
+
+func getSessions(c *gin.Context) {
+    c.JSON(200, "get-sessions")
+}
+
+func addSpectrum(c *gin.Context) {
+    c.JSON(200, "add-spectrum")
+}
+
+func getSpectrums(c *gin.Context) {
+    c.JSON(200, "get-spectrums")
 }
 
 func main() {
+
     db, err := sql.Open("postgres", "user=numsys dbname=gs sslmode=disable")
     if err != nil {
         log.Fatal(err)
     }
     defer db.Close()
 
-    router := gin.Default()
-    router.GET("/ping", ping)
-    router.Run(":80")
+    r := gin.Default()
+    r.POST("/add-session", addSession)
+    r.GET("/get-sessions", getSessions)
+    r.POST("/add-spectrum", addSpectrum)
+    r.GET("/get-spectrums", getSpectrums)
+    r.Run(":80")
 }
+
