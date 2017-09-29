@@ -21,12 +21,27 @@ package main
 
 const sql_connection_string = "host=localhost user=numsys dbname=gs sslmode=disable"
 
-const sql_insert_spectrum = ` insert into spectrum (
-    session_name, session_index, start_time,
-    latitude, latitude_error, longitude,
-    longitude_error, altitude, altitude_error,
-    track, track_error, speed,
-    speed_error, climb, climb_error,
-    livetime, realtime, total_count,
-    num_channels, channels, doserate
+const sql_insert_spectrum = `
+insert into spectrum (
+    session_name,
+    session_index,
+    start_time,
+    latitude,
+    latitude_error,
+    longitude,
+    longitude_error,
+    altitude,
+    altitude_error,
+    track,
+    track_error,
+    speed,
+    speed_error,
+    climb,
+    climb_error,
+    livetime,
+    realtime,
+    total_count,
+    num_channels,
+    channels,
+    doserate
 ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`

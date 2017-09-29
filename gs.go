@@ -57,7 +57,7 @@ func addSpectrum(c *gin.Context) {
 
 	db, ok := c.Keys["db"].(*sql.DB)
 	if !ok {
-		fmt.Println("No database instance in context")
+		fmt.Println("Invalid database handle in context")
 		return
 	}
 
@@ -75,20 +75,34 @@ func addSpectrum(c *gin.Context) {
 	}
 
 	const dateFormat string = "2006-01-02T15:04:05.999Z"
-	dt, err := time.Parse(dateFormat, s.StartTime)
+	dateTime, err := time.Parse(dateFormat, s.StartTime)
 	if err != nil {
 		fmt.Print(err)
 		return
 	}
 
 	_, err = db.Exec(sql_insert_spectrum,
-		s.SessionName, s.SessionIndex, dt,
-		s.Latitude, s.LatitudeError, s.Longitude,
-		s.LongitudeError, s.Altitude, s.AltitudeError,
-		s.Track, s.TrackError, s.Speed,
-		s.SpeedError, s.Climb, s.ClimbError,
-		s.Livetime, s.Realtime, s.TotalCount,
-		s.NumChannels, s.Channels, s.Doserate)
+		s.SessionName,
+		s.SessionIndex,
+		dateTime,
+		s.Latitude,
+		s.LatitudeError,
+		s.Longitude,
+		s.LongitudeError,
+		s.Altitude,
+		s.AltitudeError,
+		s.Track,
+		s.TrackError,
+		s.Speed,
+		s.SpeedError,
+		s.Climb,
+		s.ClimbError,
+		s.Livetime,
+		s.Realtime,
+		s.TotalCount,
+		s.NumChannels,
+		s.Channels,
+		s.Doserate)
 	if err != nil {
 		fmt.Print(err)
 		return
