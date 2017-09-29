@@ -49,10 +49,16 @@ type Spectrum struct {
     TotalCount int `json:"total_count"`
     NumChannels int `json:"num_channels"`
     Channels string `json:"channels"`
-    Doserate string `json:"doserate"`
+    Doserate float64 `json:"doserate"`
 }
 
 func addSpectrum(c *gin.Context) {
+
+    db, ok := c.Keys["db"].(*sql.DB)
+    if !ok {
+        fmt.Println("No database instance in context")
+        return
+    }
 
     body, err := ioutil.ReadAll(c.Request.Body)
     if err != nil {
@@ -60,29 +66,56 @@ func addSpectrum(c *gin.Context) {
         return
     }
 
-    spectrum := new(Spectrum)
-    err = json.Unmarshal(body, spectrum)
+    s := new(Spectrum)
+    err = json.Unmarshal(body, s)
     if err != nil {
         fmt.Print(err)
         return
     }
 
-    c.JSON(200, spectrum)
+    _, err = db.Exec(`insert into spectrum (session_name, session_index,
+    start_time, latitude, latitude_error, longitude, longitude_error,
+    altitude, altitude_error, track, track_error, speed, speed_error,
+    climb, climb_error, livetime, realtime, total_count, num_channels,
+    channels, doserate) values
+    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+    $16, $17, $18, $19, $20, $21)`,
+    s.SessionName, s.SessionIndex, s.StartTime, s.Latitude, s.LatitudeError,
+    s.Longitude, s.LongitudeError, s.Altitude, s.AltitudeError,
+    s.Track, s.TrackError, s.Speed, s.SpeedError, s.Climb, s.ClimbError,
+    s.Livetime, s.Realtime, s.TotalCount, s.NumChannels, s.Channels, s.Doserate)
+    if err != nil {
+        fmt.Print(err)
+        return
+    }
+
+    c.JSON(200, "Spectrum inserted")
 }
 
 func getSpectrums(c *gin.Context) {
+
     c.JSON(200, "get-spectrums")
 }
 
 func main() {
 
-    db, err := sql.Open("postgres", "user=numsys dbname=gs sslmode=disable")
+    db, err := sql.Open("postgres", "host=localhost user=numsys dbname=gs sslmode=disable")
     if err != nil {
-        fmt.Print(err)
+        panic(err)
     }
     defer db.Close()
 
+    err = db.Ping()
+    if err != nil {
+        panic(err)
+    }
+
     r := gin.Default()
+    r.Use(func(c *gin.Context) {
+        c.Set("db", db)
+        c.Next()
+    })
+
     r.POST("/add-spectrum", addSpectrum)
     r.GET("/get-spectrums", getSpectrums)
     r.Run(":80")
