@@ -20,7 +20,7 @@
 package main
 
 import (
-    "log"
+    "fmt"
     "io/ioutil"
     "encoding/json"
     "database/sql"
@@ -28,41 +28,46 @@ import (
     "github.com/gin-gonic/gin"
 )
 
-type DetectorData struct {
-    TypeName string `json:"type_name"`
-    SerialNumber string `json:"serialnumber"`
-}
-
-type Session struct {
-    Name string `json:"name"`
-    Comment string `json:"comment"`
-    *DetectorData `json:"detector_data"`
-}
-
-func addSession(c *gin.Context) {
-
-    body, err := ioutil.ReadAll(c.Request.Body)
-    if err != nil {
-        log.Print(err)
-        return
-    }
-
-    session := new(Session)
-    err = json.Unmarshal(body, session)
-    if err != nil {
-        log.Print(err)
-        return
-    }
-
-    c.JSON(200, session)
-}
-
-func getSessions(c *gin.Context) {
-    c.JSON(200, "get-sessions")
+type Spectrum struct {
+    SessionName string `json:"session_name"`
+    SessionIndex int `json:"session_index"`
+    StartTime string `json:"start_time"`
+    Latitude float64 `json:"latitude"`
+    LatitudeError float64 `json:"latitude_error"`
+    Longitude float64 `json:"longitude"`
+    LongitudeError float64 `json:"longitude_error"`
+    Altitude float64 `json:"altitude"`
+    AltitudeError float64 `json:"altitude_error"`
+    Track float64 `json:"track"`
+    TrackError float64 `json:"track_error"`
+    Speed float64 `json:"speed"`
+    SpeedError float64 `json:"speed_error"`
+    Climb float64 `json:"climb"`
+    ClimbError float64 `json:"climb_error"`
+    Livetime float64 `json:"livetime"`
+    Realtime float64 `json:"realtime"`
+    TotalCount int `json:"total_count"`
+    NumChannels int `json:"num_channels"`
+    Channels string `json:"channels"`
+    Doserate string `json:"doserate"`
 }
 
 func addSpectrum(c *gin.Context) {
-    c.JSON(200, "add-spectrum")
+
+    body, err := ioutil.ReadAll(c.Request.Body)
+    if err != nil {
+        fmt.Print(err)
+        return
+    }
+
+    spectrum := new(Spectrum)
+    err = json.Unmarshal(body, spectrum)
+    if err != nil {
+        fmt.Print(err)
+        return
+    }
+
+    c.JSON(200, spectrum)
 }
 
 func getSpectrums(c *gin.Context) {
@@ -73,13 +78,11 @@ func main() {
 
     db, err := sql.Open("postgres", "user=numsys dbname=gs sslmode=disable")
     if err != nil {
-        log.Fatal(err)
+        fmt.Print(err)
     }
     defer db.Close()
 
     r := gin.Default()
-    r.POST("/add-session", addSession)
-    r.GET("/get-sessions", getSessions)
     r.POST("/add-spectrum", addSpectrum)
     r.GET("/get-spectrums", getSpectrums)
     r.Run(":80")

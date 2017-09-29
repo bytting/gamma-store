@@ -3,22 +3,11 @@ create database gs;
 
 \c gs;
 
-create sequence session_id;
-
-create table session (
-    id int not null default nextval('session_id'),
-    name char(15),
-    comment varchar(256),
-    detector_data text
-);
-
-alter sequence session_id owned by session.id;
-
 create sequence spectrum_id;
 
 create table spectrum (
     id int not null default nextval('spectrum_id'),
-    session_id int not null,
+    session_name varchar(16) not null,
     session_index int not null,
     start_time timestamp,
     latitude float8,

@@ -1,2 +1,0 @@
-#!/bin/sh
-curl -H "Content-Type: application/json" -X POST -d '{"name":"121212_212121","comment":"comment...","detector_data":{"type_name":"Nai 2 inch","serialnumber":"CP-932"}}' http://localhost/add-session
