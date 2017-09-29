@@ -4,12 +4,13 @@ create database gs;
 \c gs;
 
 create sequence spectrum_id;
+alter sequence spectrum_id owned by spectrum.id;
 
 create table spectrum (
     id int not null default nextval('spectrum_id'),
     session_name varchar(24) not null,
     session_index int not null,
-    start_time varchar(24) default '',
+    start_time timestamp default null,
     latitude float8 default 0,
     latitude_error float8 default 0,
     longitude float8 default 0,
@@ -29,8 +30,7 @@ create table spectrum (
     channels text default '',
     doserate float8 default 0
 );
-
-alter sequence spectrum_id owned by spectrum.id;
+alter table spectrum alter column start_time set default now();
 
 grant all privileges on table spectrum to numsys;
 grant usage, select on sequence spectrum_id to numsys;

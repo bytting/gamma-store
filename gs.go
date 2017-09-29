@@ -21,6 +21,7 @@ package main
 
 import (
     "fmt"
+    "time"
     "io/ioutil"
     "encoding/json"
     "database/sql"
@@ -73,6 +74,13 @@ func addSpectrum(c *gin.Context) {
         return
     }
 
+    const dateFormat string = "2006-01-02T15:04:05.999Z"
+    dt, err := time.Parse(dateFormat, s.StartTime)
+    if err != nil {
+        fmt.Print(err)
+        return
+    }
+
     _, err = db.Exec(`insert into spectrum (session_name, session_index,
     start_time, latitude, latitude_error, longitude, longitude_error,
     altitude, altitude_error, track, track_error, speed, speed_error,
@@ -80,10 +88,11 @@ func addSpectrum(c *gin.Context) {
     channels, doserate) values
     ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
     $16, $17, $18, $19, $20, $21)`,
-    s.SessionName, s.SessionIndex, s.StartTime, s.Latitude, s.LatitudeError,
-    s.Longitude, s.LongitudeError, s.Altitude, s.AltitudeError,
-    s.Track, s.TrackError, s.Speed, s.SpeedError, s.Climb, s.ClimbError,
-    s.Livetime, s.Realtime, s.TotalCount, s.NumChannels, s.Channels, s.Doserate)
+    s.SessionName, s.SessionIndex, dt,
+    s.Latitude, s.LatitudeError, s.Longitude, s.LongitudeError,
+    s.Altitude, s.AltitudeError, s.Track, s.TrackError, s.Speed, s.SpeedError,
+    s.Climb, s.ClimbError, s.Livetime, s.Realtime, s.TotalCount,
+    s.NumChannels, s.Channels, s.Doserate)
     if err != nil {
         fmt.Print(err)
         return
