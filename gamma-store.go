@@ -23,10 +23,28 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-	"io/ioutil"
 )
+
+func getSessions(c *gin.Context) {
+
+	db, ok := c.Keys["db"].(*sql.DB)
+	if !ok {
+		fmt.Println("Invalid database handle in context")
+		return
+	}
+
+	sessions, err := selectSessions(db)
+	if err != nil {
+		fmt.Print(err)
+		return
+	}
+
+	c.JSON(200, sessions)
+}
 
 func addSpectrum(c *gin.Context) {
 
@@ -80,6 +98,7 @@ func main() {
 		c.Next()
 	})
 
+	r.GET("/get-sessions", getSessions)
 	r.POST("/add-spectrum", addSpectrum)
 	r.GET("/get-spectrums", getSpectrums)
 	r.Run(":80")

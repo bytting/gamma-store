@@ -26,6 +26,30 @@ import (
 
 const sql_connection_string string = "host=localhost user=numsys dbname=gs sslmode=disable"
 
+func selectSessions(db *sql.DB) ([]string, error) {
+
+	rows, err := db.Query("select distinct session_name from spectrum")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	sessionNames := make([]string, 0)
+	var sessionName string
+	for rows.Next() {
+		if err := rows.Scan(&sessionName); err != nil {
+			return nil, err
+		}
+		sessionNames = append(sessionNames, sessionName)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return sessionNames, nil
+}
+
 func insertSpectrum(db *sql.DB, s *Spectrum) error {
 
 	const dateFormat string = "2006-01-02T15:04:05.999Z"
@@ -36,8 +60,8 @@ func insertSpectrum(db *sql.DB, s *Spectrum) error {
 	}
 
 	const sql_insert_spectrum = `
-    insert into spectrum (
-        session_name,
+	insert into spectrum (
+		session_name,
         session_index,
         start_time,
         latitude,    
@@ -51,7 +75,7 @@ func insertSpectrum(db *sql.DB, s *Spectrum) error {
         num_channels,
         channels,
         doserate
-        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+    ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 
 	_, err = db.Exec(sql_insert_spectrum,
 		s.SessionName,
