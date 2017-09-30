@@ -26,32 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"io/ioutil"
-	"time"
 )
-
-type Spectrum struct {
-	SessionName    string  `json:"session_name"`
-	SessionIndex   int     `json:"session_index"`
-	StartTime      string  `json:"start_time"`
-	Latitude       float64 `json:"latitude"`
-	LatitudeError  float64 `json:"latitude_error"`
-	Longitude      float64 `json:"longitude"`
-	LongitudeError float64 `json:"longitude_error"`
-	Altitude       float64 `json:"altitude"`
-	AltitudeError  float64 `json:"altitude_error"`
-	Track          float64 `json:"track"`
-	TrackError     float64 `json:"track_error"`
-	Speed          float64 `json:"speed"`
-	SpeedError     float64 `json:"speed_error"`
-	Climb          float64 `json:"climb"`
-	ClimbError     float64 `json:"climb_error"`
-	Livetime       float64 `json:"livetime"`
-	Realtime       float64 `json:"realtime"`
-	TotalCount     int     `json:"total_count"`
-	NumChannels    int     `json:"num_channels"`
-	Channels       string  `json:"channels"`
-	Doserate       float64 `json:"doserate"`
-}
 
 func addSpectrum(c *gin.Context) {
 
@@ -68,42 +43,12 @@ func addSpectrum(c *gin.Context) {
 	}
 
 	s := new(Spectrum)
-	err = json.Unmarshal(body, s)
-	if err != nil {
+	if err := json.Unmarshal(body, s); err != nil {
 		fmt.Print(err)
 		return
 	}
 
-	const dateFormat string = "2006-01-02T15:04:05.999Z"
-	dateTime, err := time.Parse(dateFormat, s.StartTime)
-	if err != nil {
-		fmt.Print(err)
-		return
-	}
-
-	_, err = db.Exec(sql_insert_spectrum,
-		s.SessionName,
-		s.SessionIndex,
-		dateTime,
-		s.Latitude,
-		s.LatitudeError,
-		s.Longitude,
-		s.LongitudeError,
-		s.Altitude,
-		s.AltitudeError,
-		s.Track,
-		s.TrackError,
-		s.Speed,
-		s.SpeedError,
-		s.Climb,
-		s.ClimbError,
-		s.Livetime,
-		s.Realtime,
-		s.TotalCount,
-		s.NumChannels,
-		s.Channels,
-		s.Doserate)
-	if err != nil {
+	if err := insertSpectrum(db, s); err != nil {
 		fmt.Print(err)
 		return
 	}

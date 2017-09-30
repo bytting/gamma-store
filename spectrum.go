@@ -19,29 +19,19 @@
 
 package main
 
-const sql_connection_string = "host=localhost user=numsys dbname=gs sslmode=disable"
-
-const sql_insert_spectrum = `
-insert into spectrum (
-    session_name,
-    session_index,
-    start_time,
-    latitude,
-    latitude_error,
-    longitude,
-    longitude_error,
-    altitude,
-    altitude_error,
-    track,
-    track_error,
-    speed,
-    speed_error,
-    climb,
-    climb_error,
-    livetime,
-    realtime,
-    total_count,
-    num_channels,
-    channels,
-    doserate
-) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`
+type Spectrum struct {
+	SessionName  string  `json:"session_name"`
+	SessionIndex int     `json:"session_index"`
+	StartTime    string  `json:"start_time"`
+	Latitude     float64 `json:"latitude"`
+	Longitude    float64 `json:"longitude"`
+	Altitude     float64 `json:"altitude"`
+	Track        float64 `json:"track"`
+	Speed        float64 `json:"speed"`
+	Climb        float64 `json:"climb"`
+	Livetime     float64 `json:"livetime"`
+	Realtime     float64 `json:"realtime"`
+	NumChannels  int     `json:"num_channels"`
+	Channels     string  `json:"channels"`
+	Doserate     float64 `json:"doserate"`
+}
