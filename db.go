@@ -24,9 +24,13 @@ import (
 	"time"
 )
 
-const sql_connection_string string = "host=localhost user=numsys dbname=gs sslmode=disable"
+const dbDateFormat string = "2006-01-02T15:04:05.999Z"
 
-func selectSessions(db *sql.DB) ([]string, error) {
+func dbConnectionString() string {
+	return "host=localhost user=numsys dbname=gs sslmode=disable"
+}
+
+func dbSelectSessions(db *sql.DB) ([]string, error) {
 
 	rows, err := db.Query("select distinct session_name from spectrum")
 	if err != nil {
@@ -50,11 +54,9 @@ func selectSessions(db *sql.DB) ([]string, error) {
 	return sessionNames, nil
 }
 
-func insertSpectrum(db *sql.DB, s *Spectrum) error {
+func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
 
-	const dateFormat string = "2006-01-02T15:04:05.999Z"
-
-	dateTime, err := time.Parse(dateFormat, s.StartTime)
+	dateTime, err := time.Parse(dbDateFormat, s.StartTime)
 	if err != nil {
 		return err
 	}
@@ -94,4 +96,31 @@ func insertSpectrum(db *sql.DB, s *Spectrum) error {
 		s.Doserate)
 
 	return err
+}
+
+func dbSelectSpectrums(db *sql.DB) ([]Spectrum, error) {
+
+	rows, err := db.Query("select * from spectrum")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	spectrums := make([]Spectrum, 0)
+	var s Spectrum
+	for rows.Next() {
+		var id int
+		var dateTime time.Time
+		if err := rows.Scan(&id, &s.SessionName, &s.SessionIndex, &dateTime, &s.Latitude, &s.Longitude, &s.Altitude, &s.Track, &s.Speed, &s.Climb, &s.Livetime, &s.Realtime, &s.NumChannels, &s.Channels, &s.Doserate); err != nil {
+			return nil, err
+		}
+		s.StartTime = dateTime.Format(dbDateFormat)
+		spectrums = append(spectrums, s)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return spectrums, nil
 }

@@ -30,7 +30,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func getSessions(c *gin.Context) {
+func apiGetSessions(c *gin.Context) {
 
 	db, ok := c.Keys["db"].(*sql.DB)
 	if !ok {
@@ -39,7 +39,7 @@ func getSessions(c *gin.Context) {
 		return
 	}
 
-	sessions, err := selectSessions(db)
+	sessions, err := dbSelectSessions(db)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		log.Print(err)
@@ -49,7 +49,7 @@ func getSessions(c *gin.Context) {
 	c.JSON(http.StatusOK, sessions)
 }
 
-func addSpectrum(c *gin.Context) {
+func apiAddSpectrum(c *gin.Context) {
 
 	db, ok := c.Keys["db"].(*sql.DB)
 	if !ok {
@@ -60,7 +60,7 @@ func addSpectrum(c *gin.Context) {
 
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithStatus(http.StatusBadRequest)
 		log.Print(err)
 		return
 	}
@@ -72,7 +72,7 @@ func addSpectrum(c *gin.Context) {
 		return
 	}
 
-	if err := insertSpectrum(db, s); err != nil {
+	if err := dbInsertSpectrum(db, s); err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		log.Print(err)
 		return
@@ -81,14 +81,28 @@ func addSpectrum(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Spectrum inserted"})
 }
 
-func getSpectrums(c *gin.Context) {
+func apiGetSpectrums(c *gin.Context) {
 
-	c.JSON(http.StatusOK, "get-spectrums")
+	db, ok := c.Keys["db"].(*sql.DB)
+	if !ok {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		log.Println("Invalid database handle in context")
+		return
+	}
+
+	spectrums, err := dbSelectSpectrums(db)
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		log.Print(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, spectrums)
 }
 
 func main() {
 
-	db, err := sql.Open("postgres", sql_connection_string)
+	db, err := sql.Open("postgres", dbConnectionString())
 	if err != nil {
 		panic(err)
 	}
@@ -113,8 +127,8 @@ func main() {
 		c.Next()
 	})
 
-	r.GET("/get-sessions", getSessions)
-	r.POST("/add-spectrum", addSpectrum)
-	r.GET("/get-spectrums", getSpectrums)
+	r.GET("/get-sessions", apiGetSessions)
+	r.POST("/add-spectrum", apiAddSpectrum)
+	r.GET("/get-spectrums", apiGetSpectrums)
 	r.Run(":80")
 }
