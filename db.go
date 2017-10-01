@@ -21,13 +21,15 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
 const dbDateFormat string = "2006-01-02T15:04:05.999Z"
 
-func dbConnectionString() string {
-	return "host=localhost user=numsys dbname=gs sslmode=disable"
+func dbConnectionString(hostname, username, dbname string) string {
+
+	return fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable", hostname, username, dbname)
 }
 
 func dbSelectSessions(db *sql.DB) ([]string, error) {

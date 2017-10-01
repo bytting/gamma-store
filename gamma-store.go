@@ -22,6 +22,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -30,19 +31,28 @@ import (
 	_ "github.com/lib/pq"
 )
 
+func abortApiRequest(c *gin.Context, status int, err error) {
+
+	c.AbortWithStatus(status)
+	log.Print(err)
+}
+
+func makeApiResponseMessage(msg string) gin.H {
+
+	return gin.H{"message": msg}
+}
+
 func apiGetSessions(c *gin.Context) {
 
 	db, ok := c.Keys["db"].(*sql.DB)
 	if !ok {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		log.Println("Invalid database handle in context")
+		abortApiRequest(c, http.StatusInternalServerError, errors.New("Invalid database handle in context"))
 		return
 	}
 
 	sessions, err := dbSelectSessions(db)
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		log.Print(err)
+		abortApiRequest(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -53,47 +63,41 @@ func apiAddSpectrum(c *gin.Context) {
 
 	db, ok := c.Keys["db"].(*sql.DB)
 	if !ok {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		log.Println("Invalid database handle in context")
+		abortApiRequest(c, http.StatusInternalServerError, errors.New("Invalid database handle in context"))
 		return
 	}
 
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
-		log.Print(err)
+		abortApiRequest(c, http.StatusBadRequest, err)
 		return
 	}
 
 	s := new(Spectrum)
 	if err := json.Unmarshal(body, s); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		log.Print(err)
+		abortApiRequest(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	if err := dbInsertSpectrum(db, s); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		log.Print(err)
+		abortApiRequest(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Spectrum inserted"})
+	c.JSON(http.StatusOK, makeApiResponseMessage("Spectrum inserted"))
 }
 
 func apiGetSpectrums(c *gin.Context) {
 
 	db, ok := c.Keys["db"].(*sql.DB)
 	if !ok {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		log.Println("Invalid database handle in context")
+		abortApiRequest(c, http.StatusInternalServerError, errors.New("Invalid database handle in context"))
 		return
 	}
 
 	spectrums, err := dbSelectSpectrums(db)
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		log.Print(err)
+		abortApiRequest(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -102,7 +106,7 @@ func apiGetSpectrums(c *gin.Context) {
 
 func main() {
 
-	db, err := sql.Open("postgres", dbConnectionString())
+	db, err := sql.Open("postgres", dbConnectionString("localhost", "numsys", "gs"))
 	if err != nil {
 		panic(err)
 	}
@@ -114,13 +118,6 @@ func main() {
 	}
 
 	r := gin.Default()
-
-	r.Use(func(c *gin.Context) {
-		c.Next()
-		if len(c.Errors) > 0 {
-			c.JSON(-1, c.Errors)
-		}
-	})
 
 	r.Use(func(c *gin.Context) {
 		c.Set("db", db)
