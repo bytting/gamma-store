@@ -22,8 +22,9 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
+	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -33,50 +34,56 @@ func getSessions(c *gin.Context) {
 
 	db, ok := c.Keys["db"].(*sql.DB)
 	if !ok {
-		fmt.Println("Invalid database handle in context")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		log.Println("Invalid database handle in context")
 		return
 	}
 
 	sessions, err := selectSessions(db)
 	if err != nil {
-		fmt.Print(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		log.Print(err)
 		return
 	}
 
-	c.JSON(200, sessions)
+	c.JSON(http.StatusOK, sessions)
 }
 
 func addSpectrum(c *gin.Context) {
 
 	db, ok := c.Keys["db"].(*sql.DB)
 	if !ok {
-		fmt.Println("Invalid database handle in context")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		log.Println("Invalid database handle in context")
 		return
 	}
 
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		fmt.Print(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		log.Print(err)
 		return
 	}
 
 	s := new(Spectrum)
 	if err := json.Unmarshal(body, s); err != nil {
-		fmt.Print(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		log.Print(err)
 		return
 	}
 
 	if err := insertSpectrum(db, s); err != nil {
-		fmt.Print(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		log.Print(err)
 		return
 	}
 
-	c.JSON(200, "Spectrum inserted")
+	c.JSON(http.StatusOK, gin.H{"message": "Spectrum inserted"})
 }
 
 func getSpectrums(c *gin.Context) {
 
-	c.JSON(200, "get-spectrums")
+	c.JSON(http.StatusOK, "get-spectrums")
 }
 
 func main() {
@@ -93,6 +100,14 @@ func main() {
 	}
 
 	r := gin.Default()
+
+	r.Use(func(c *gin.Context) {
+		c.Next()
+		if len(c.Errors) > 0 {
+			c.JSON(-1, c.Errors)
+		}
+	})
+
 	r.Use(func(c *gin.Context) {
 		c.Set("db", db)
 		c.Next()
