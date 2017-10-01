@@ -64,22 +64,22 @@ func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
 	}
 
 	const sql_insert_spectrum = `
-	insert into spectrum (
+		insert into spectrum (
 		session_name,
-        session_index,
-        start_time,
-        latitude,    
-        longitude,    
-        altitude,    
-        track,    
-        speed,    
-        climb,    
-        livetime,
-        realtime,    
-        num_channels,
-        channels,
-        doserate
-    ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+		session_index,
+		start_time,
+		latitude,    
+		longitude,    
+		altitude,    
+		track,    
+		speed,    
+		climb,    
+		livetime,
+		realtime,    
+		num_channels,
+		channels,
+		doserate
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 
 	_, err = db.Exec(sql_insert_spectrum,
 		s.SessionName,
