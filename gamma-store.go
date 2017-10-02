@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"time"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -84,9 +85,24 @@ func apiGetSpectrums(db *sql.DB) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
-		session := c.Param("session")
-
-		spectrums, err := dbSelectSpectrums(db, session)
+		sessionName := c.Param("session_name")
+		strDateBegin := c.Param("date_begin")
+		strDateEnd := c.Param("date_end")
+		
+		const dateFormat string = "20060102_150405"
+		
+		if len(strDateBegin) == 0 {
+			strDateBegin = "19000101_000000"
+		}
+		
+		if len(strDateEnd) == 0 {
+			strDateEnd = time.Now().Format(dateFormat)
+		}
+				
+		dateBegin, err := time.Parse(dateFormat, strDateBegin)  
+		dateEnd, err := time.Parse(dateFormat, strDateEnd)
+		
+		spectrums, err := dbSelectSpectrums(db, sessionName, dateBegin, dateEnd)
 		if err != nil {
 			abortApiRequest(c, http.StatusInternalServerError, err)
 			return
@@ -108,9 +124,13 @@ func main() {
 		panic(err)
 	}
 
+    //gin.SetMode(gin.ReleaseMode)
+
 	r := gin.Default()
 	r.GET("/get-sessions", apiGetSessions(db))
 	r.POST("/add-spectrum", apiAddSpectrum(db))
-	r.GET("/get-spectrums/:session", apiGetSpectrums(db))
+	r.GET("/get-spectrums/:session_name", apiGetSpectrums(db))
+	r.GET("/get-spectrums/:session_name/:date_begin", apiGetSpectrums(db))
+    r.GET("/get-spectrums/:session_name/:date_begin/:date_end", apiGetSpectrums(db))
 	r.Run(":80")
 }

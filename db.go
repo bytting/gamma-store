@@ -68,14 +68,14 @@ func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
 		session_name,
 		session_index,
 		start_time,
-		latitude,    
-		longitude,    
-		altitude,    
-		track,    
-		speed,    
-		climb,    
+		latitude,
+		longitude,
+		altitude,
+		track,
+		speed,
+		climb,
 		livetime,
-		realtime,    
+		realtime,
 		num_channels,
 		channels,
 		doserate
@@ -100,9 +100,9 @@ func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
 	return err
 }
 
-func dbSelectSpectrums(db *sql.DB, session string) ([]Spectrum, error) {
+func dbSelectSpectrums(db *sql.DB, sessionName string, dateBegin, dateEnd time.Time) ([]Spectrum, error) {
 
-	rows, err := db.Query("select * from spectrum where session_name = $1", session)
+	rows, err := db.Query("select * from spectrum where session_name = $1 and start_time between $2 and $3 order by start_time", sessionName, dateBegin, dateEnd)
 	if err != nil {
 		return nil, err
 	}
