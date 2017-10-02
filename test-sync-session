@@ -1,0 +1,3 @@
+#!/bin/bash
+
+curl -H "Content-Type: application/json" -X POST -d '{"session_indices":[1, 2, 3],"last_index":5}' http://localhost/sync-session/111111_111111

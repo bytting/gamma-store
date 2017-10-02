@@ -24,8 +24,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
-	"time"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -56,6 +56,34 @@ func apiGetSessions(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+func apiSyncSession(db *sql.DB) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+
+		sessionName := c.Param("session_name")
+
+		body, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			abortApiRequest(c, http.StatusBadRequest, err)
+			return
+		}
+
+		sync := new(Sync)
+		if err := json.Unmarshal(body, sync); err != nil {
+			abortApiRequest(c, http.StatusInternalServerError, err)
+			return
+		}
+
+		spectrums, err := dbSelectSync(db, sessionName, sync)
+		if err != nil {
+			abortApiRequest(c, http.StatusInternalServerError, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, spectrums)
+	}
+}
+
 func apiAddSpectrum(db *sql.DB) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
@@ -66,13 +94,13 @@ func apiAddSpectrum(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		s := new(Spectrum)
-		if err := json.Unmarshal(body, s); err != nil {
+		spec := new(Spectrum)
+		if err := json.Unmarshal(body, spec); err != nil {
 			abortApiRequest(c, http.StatusInternalServerError, err)
 			return
 		}
 
-		if err := dbInsertSpectrum(db, s); err != nil {
+		if err := dbInsertSpectrum(db, spec); err != nil {
 			abortApiRequest(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -88,20 +116,20 @@ func apiGetSpectrums(db *sql.DB) gin.HandlerFunc {
 		sessionName := c.Param("session_name")
 		strDateBegin := c.Param("date_begin")
 		strDateEnd := c.Param("date_end")
-		
+
 		const dateFormat string = "20060102_150405"
-		
+
 		if len(strDateBegin) == 0 {
 			strDateBegin = "19000101_000000"
 		}
-		
+
 		if len(strDateEnd) == 0 {
 			strDateEnd = time.Now().Format(dateFormat)
 		}
-				
-		dateBegin, err := time.Parse(dateFormat, strDateBegin)  
+
+		dateBegin, err := time.Parse(dateFormat, strDateBegin)
 		dateEnd, err := time.Parse(dateFormat, strDateEnd)
-		
+
 		spectrums, err := dbSelectSpectrums(db, sessionName, dateBegin, dateEnd)
 		if err != nil {
 			abortApiRequest(c, http.StatusInternalServerError, err)
@@ -124,13 +152,14 @@ func main() {
 		panic(err)
 	}
 
-    //gin.SetMode(gin.ReleaseMode)
+	//gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
 	r.GET("/get-sessions", apiGetSessions(db))
+	r.POST("/sync-session/:session_name", apiSyncSession(db))
 	r.POST("/add-spectrum", apiAddSpectrum(db))
 	r.GET("/get-spectrums/:session_name", apiGetSpectrums(db))
 	r.GET("/get-spectrums/:session_name/:date_begin", apiGetSpectrums(db))
-    r.GET("/get-spectrums/:session_name/:date_begin/:date_end", apiGetSpectrums(db))
+	r.GET("/get-spectrums/:session_name/:date_begin/:date_end", apiGetSpectrums(db))
 	r.Run(":80")
 }

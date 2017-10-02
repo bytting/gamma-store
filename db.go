@@ -22,6 +22,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	//"log"
+	//"strings"
 	"time"
 )
 
@@ -54,6 +56,55 @@ func dbSelectSessions(db *sql.DB) ([]string, error) {
 	}
 
 	return sessionNames, nil
+}
+
+func dbSelectSync(db *sql.DB, sessionName string, sync *Sync) ([]Spectrum, error) {
+
+	//indexList := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(sync.SessionIndices)), ","), "[]")
+	//log.Println(indexList)
+
+	rows, err := db.Query("select * from spectrum where session_name = $1 and (session_index in (1, 2, 3) or session_index > $2)",
+		sessionName,
+		sync.LastIndex)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	spectrums := make([]Spectrum, 0)
+	var spec Spectrum
+	for rows.Next() {
+		var id int
+		var dateTime time.Time
+		err = rows.Scan(
+			&id,
+			&spec.SessionName,
+			&spec.SessionIndex,
+			&dateTime,
+			&spec.Latitude,
+			&spec.Longitude,
+			&spec.Altitude,
+			&spec.Track,
+			&spec.Speed,
+			&spec.Climb,
+			&spec.Livetime,
+			&spec.Realtime,
+			&spec.NumChannels,
+			&spec.Channels,
+			&spec.Doserate)
+		if err != nil {
+			return nil, err
+		}
+
+		spec.StartTime = dateTime.Format(dbDateFormat)
+		spectrums = append(spectrums, spec)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return spectrums, nil
 }
 
 func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
@@ -102,22 +153,42 @@ func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
 
 func dbSelectSpectrums(db *sql.DB, sessionName string, dateBegin, dateEnd time.Time) ([]Spectrum, error) {
 
-	rows, err := db.Query("select * from spectrum where session_name = $1 and start_time between $2 and $3 order by start_time", sessionName, dateBegin, dateEnd)
+	rows, err := db.Query("select * from spectrum where session_name = $1 and start_time between $2 and $3 order by start_time",
+		sessionName,
+		dateBegin,
+		dateEnd)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	spectrums := make([]Spectrum, 0)
-	var s Spectrum
+	var spec Spectrum
 	for rows.Next() {
 		var id int
 		var dateTime time.Time
-		if err := rows.Scan(&id, &s.SessionName, &s.SessionIndex, &dateTime, &s.Latitude, &s.Longitude, &s.Altitude, &s.Track, &s.Speed, &s.Climb, &s.Livetime, &s.Realtime, &s.NumChannels, &s.Channels, &s.Doserate); err != nil {
+		err = rows.Scan(
+			&id,
+			&spec.SessionName,
+			&spec.SessionIndex,
+			&dateTime,
+			&spec.Latitude,
+			&spec.Longitude,
+			&spec.Altitude,
+			&spec.Track,
+			&spec.Speed,
+			&spec.Climb,
+			&spec.Livetime,
+			&spec.Realtime,
+			&spec.NumChannels,
+			&spec.Channels,
+			&spec.Doserate)
+		if err != nil {
 			return nil, err
 		}
-		s.StartTime = dateTime.Format(dbDateFormat)
-		spectrums = append(spectrums, s)
+
+		spec.StartTime = dateTime.Format(dbDateFormat)
+		spectrums = append(spectrums, spec)
 	}
 
 	if err := rows.Err(); err != nil {
