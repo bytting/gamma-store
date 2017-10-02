@@ -100,9 +100,9 @@ func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
 	return err
 }
 
-func dbSelectSpectrums(db *sql.DB) ([]Spectrum, error) {
+func dbSelectSpectrums(db *sql.DB, session string) ([]Spectrum, error) {
 
-	rows, err := db.Query("select * from spectrum")
+	rows, err := db.Query("select * from spectrum where session_name = $1", session)
 	if err != nil {
 		return nil, err
 	}
