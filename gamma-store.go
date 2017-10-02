@@ -133,7 +133,16 @@ func apiGetSpectrums(db *sql.DB) gin.HandlerFunc {
 		}
 
 		dateBegin, err := time.Parse(dateFormat, strDateBegin)
+		if err != nil {
+			abortApiRequest(c, http.StatusBadRequest, err)
+			return
+		}
+
 		dateEnd, err := time.Parse(dateFormat, strDateEnd)
+		if err != nil {
+			abortApiRequest(c, http.StatusBadRequest, err)
+			return
+		}
 
 		spectrums, err := dbSelectSpectrums(db, sessionName, dateBegin, dateEnd)
 		if err != nil {
