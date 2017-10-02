@@ -74,6 +74,11 @@ func apiSyncSession(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		if len(sync.SessionIndices) > 60 {
+			abortApiRequest(c, http.StatusRequestEntityTooLarge, err)
+			return
+		}
+
 		spectrums, err := dbSelectSessionSync(db, sessionName, sync)
 		if err != nil {
 			abortApiRequest(c, http.StatusInternalServerError, err)
