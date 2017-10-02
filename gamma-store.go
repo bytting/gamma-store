@@ -74,7 +74,7 @@ func apiSyncSession(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		spectrums, err := dbSelectSync(db, sessionName, sync)
+		spectrums, err := dbSelectSessionSync(db, sessionName, sync)
 		if err != nil {
 			abortApiRequest(c, http.StatusInternalServerError, err)
 			return

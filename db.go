@@ -22,8 +22,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	//"log"
-	//"strings"
+	"strings"
 	"time"
 )
 
@@ -58,14 +57,12 @@ func dbSelectSessions(db *sql.DB) ([]string, error) {
 	return sessionNames, nil
 }
 
-func dbSelectSync(db *sql.DB, sessionName string, sync *Sync) ([]Spectrum, error) {
+func dbSelectSessionSync(db *sql.DB, sessionName string, sync *Sync) ([]Spectrum, error) {
 
-	//indexList := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(sync.SessionIndices)), ","), "[]")
-	//log.Println(indexList)
+	indexList := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(sync.SessionIndices)), ","), "[]")
+	query := fmt.Sprintf("select * from spectrum where session_name = $1 and (session_index in (%s) or session_index > $2)", indexList)
 
-	rows, err := db.Query("select * from spectrum where session_name = $1 and (session_index in (1, 2, 3) or session_index > $2)",
-		sessionName,
-		sync.LastIndex)
+	rows, err := db.Query(query, sessionName, sync.LastIndex)
 	if err != nil {
 		return nil, err
 	}
