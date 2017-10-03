@@ -1,6 +1,8 @@
 [Unit]
 Description=Gamma Store web service
-After=network.target
+Requires=postgresql.service
+After=postgresql.service NetworkManager-wait-online.target
+Wants=postgresql.service
 
 [Service]
 Type=simple
