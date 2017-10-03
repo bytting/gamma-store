@@ -104,6 +104,25 @@ func dbSelectSessionSync(db *sql.DB, sessionName string, sync *Sync) ([]Spectrum
 	return spectrums, nil
 }
 
+func dbAddSpectrum(db *sql.DB, s *Spectrum) error {
+
+	rows, err := db.Query("select id from spectrum where session_name = $1 and session_index = $2", s.SessionName, s.SessionIndex)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		if rows.Err() != nil {
+			return rows.Err()
+		}
+		return dbInsertSpectrum(db, s)
+
+	} else {
+		return dbUpdateSpectrum(db, s)
+	}
+}
+
 func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
 
 	dateTime, err := time.Parse(dbDateFormat, s.StartTime)
@@ -144,6 +163,48 @@ func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
 		s.NumChannels,
 		s.Channels,
 		s.Doserate)
+
+	return err
+}
+
+func dbUpdateSpectrum(db *sql.DB, s *Spectrum) error {
+
+	dateTime, err := time.Parse(dbDateFormat, s.StartTime)
+	if err != nil {
+		return err
+	}
+
+	const sql_update_spectrum = `
+		update spectrum set 		
+		start_time = $1,
+		latitude = $2,
+		longitude = $3,
+		altitude = $4,
+		track = $5,
+		speed = $6,
+		climb = $7,
+		livetime = $8,
+		realtime = $9,
+		num_channels = $10,
+		channels = $11,
+		doserate = $12 
+		where session_name = $13 and session_index = $14`
+
+	_, err = db.Exec(sql_update_spectrum,
+		dateTime,
+		s.Latitude,
+		s.Longitude,
+		s.Altitude,
+		s.Track,
+		s.Speed,
+		s.Climb,
+		s.Livetime,
+		s.Realtime,
+		s.NumChannels,
+		s.Channels,
+		s.Doserate,
+		s.SessionName,
+		s.SessionIndex)
 
 	return err
 }

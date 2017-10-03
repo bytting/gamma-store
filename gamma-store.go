@@ -105,12 +105,12 @@ func apiAddSpectrum(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := dbInsertSpectrum(db, spec); err != nil {
+		if err := dbAddSpectrum(db, spec); err != nil {
 			abortApiRequest(c, http.StatusInternalServerError, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, makeApiResponseMessage("Spectrum inserted"))
+		c.JSON(http.StatusOK, makeApiResponseMessage("Spectrum added"))
 	}
 }
 
@@ -166,7 +166,7 @@ func main() {
 		panic(err)
 	}
 
-	//gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
 	r.GET("/get-sessions", apiGetSessions(db))
