@@ -35,7 +35,7 @@ func dbConnectionString(hostname, username, dbname string) string {
 
 func dbSelectSessions(db *sql.DB) ([]string, error) {
 
-	rows, err := db.Query("select distinct session_name from spectrum")
+	rows, err := db.Query("select distinct session_name from spectrum order by session_name desc")
 	if err != nil {
 		return nil, err
 	}
