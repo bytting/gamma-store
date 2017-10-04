@@ -70,7 +70,7 @@ func apiSyncSession(db *sql.DB) gin.HandlerFunc {
 
 		sync := new(Sync)
 		if err := json.Unmarshal(body, sync); err != nil {
-			abortApiRequest(c, http.StatusInternalServerError, err)
+			abortApiRequest(c, http.StatusBadRequest, err)
 			return
 		}
 
@@ -110,7 +110,7 @@ func apiAddSpectrum(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, makeApiResponseMessage("Spectrum added"))
+		c.JSON(http.StatusOK, makeApiResponseMessage("Spectrum stored"))
 	}
 }
 
@@ -169,11 +169,13 @@ func main() {
 	// gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
+
 	r.GET("/get-sessions", apiGetSessions(db))
 	r.POST("/sync-session/:session_name", apiSyncSession(db))
 	r.POST("/add-spectrum", apiAddSpectrum(db))
 	r.GET("/get-spectrums/:session_name", apiGetSpectrums(db))
 	r.GET("/get-spectrums/:session_name/:date_begin", apiGetSpectrums(db))
 	r.GET("/get-spectrums/:session_name/:date_begin/:date_end", apiGetSpectrums(db))
+
 	r.Run(":80")
 }

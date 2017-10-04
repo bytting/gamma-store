@@ -106,7 +106,11 @@ func dbSelectSessionSync(db *sql.DB, sessionName string, sync *Sync) ([]Spectrum
 
 func dbAddSpectrum(db *sql.DB, s *Spectrum) error {
 
-	rows, err := db.Query("select id from spectrum where session_name = $1 and session_index = $2", s.SessionName, s.SessionIndex)
+	sql_insert_spectrum := "select id from spectrum where session_name = $1 and session_index = $2"
+
+	rows, err := db.Query(sql_insert_spectrum,
+		s.SessionName,
+		s.SessionIndex)
 	if err != nil {
 		return err
 	}
@@ -130,7 +134,7 @@ func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
 		return err
 	}
 
-	const sql_insert_spectrum = `
+	sql_insert_spectrum := `
 		insert into spectrum (
 		session_name,
 		session_index,
@@ -174,7 +178,7 @@ func dbUpdateSpectrum(db *sql.DB, s *Spectrum) error {
 		return err
 	}
 
-	const sql_update_spectrum = `
+	sql_update_spectrum := `
 		update spectrum set 		
 		start_time = $1,
 		latitude = $2,
@@ -211,7 +215,9 @@ func dbUpdateSpectrum(db *sql.DB, s *Spectrum) error {
 
 func dbSelectSpectrums(db *sql.DB, sessionName string, dateBegin, dateEnd time.Time) ([]Spectrum, error) {
 
-	rows, err := db.Query("select * from spectrum where session_name = $1 and start_time between $2 and $3 order by start_time",
+	sql_select_spectrum := "select * from spectrum where session_name = $1 and start_time between $2 and $3 order by start_time"
+
+	rows, err := db.Query(sql_select_spectrum,
 		sessionName,
 		dateBegin,
 		dateEnd)
