@@ -33,15 +33,11 @@ import (
     _ "github.com/lib/pq"
 )
 
-func abortApiRequest(c *gin.Context, status int, err error) {
+func abortApiRequest(c *gin.Context, status int, msg string) {
 
-    c.AbortWithStatus(status)
-    log.Print(err)
-}
-
-func makeApiResponseMessage(msg string) gin.H {
-
-    return gin.H{"message": msg}
+    c.JSON(status, gin.H{"status":status, "message":msg})
+    c.Abort()
+    log.Printf("Abort request: %s\n", msg)
 }
 
 func checkCredentials(db *sql.DB) gin.HandlerFunc {
@@ -50,33 +46,30 @@ func checkCredentials(db *sql.DB) gin.HandlerFunc {
 
         items := strings.SplitN(c.Request.Header.Get("Authorization"), " ", 2)
         if len(items) != 2 || items[0] != "Basic" {
-            log.Println("Malformed credentials")
-            c.JSON(http.StatusBadRequest, makeApiResponseMessage("Malformed credentials"))
-            c.Abort()
+            abortApiRequest(c, http.StatusBadRequest, "Malformed credentials")
             return
         }
 
-        data, _ := base64.StdEncoding.DecodeString(items[1])
+        data, err := base64.StdEncoding.DecodeString(items[1])
+        if err != nil {
+            abortApiRequest(c, http.StatusBadRequest, "Malformed credentials")
+            return
+        }
+
         cred := strings.SplitN(string(data), ":", 2)
         if len(cred) != 2 {
-            log.Println("Malformed credentials")
-            c.JSON(http.StatusBadRequest, makeApiResponseMessage("Malformed credentials"))
-            c.Abort()
+            abortApiRequest(c, http.StatusBadRequest, "Malformed credentials")
             return
         }
 
         valid, err := dbValidateCredentials(db, cred[0], cred[1])
         if err != nil {
-            log.Println("Credential validation failed")
-            c.JSON(http.StatusInternalServerError, makeApiResponseMessage("Credential validation failed"))
-            c.Abort()
+            abortApiRequest(c, http.StatusInternalServerError, "Credential validation failed")
             return
         }
 
         if !valid {
-            log.Println("Invalid credentials")
-            c.JSON(http.StatusUnauthorized, makeApiResponseMessage("Invalid credentials"))
-            c.Abort()
+            abortApiRequest(c, http.StatusUnauthorized, "Invalid credentials")
             return
         }
 
@@ -90,7 +83,7 @@ func apiGetSessions(db *sql.DB) gin.HandlerFunc {
 
         sessions, err := dbSelectSessions(db)
         if err != nil {
-            abortApiRequest(c, http.StatusInternalServerError, err)
+            abortApiRequest(c, http.StatusInternalServerError, err.Error())
             return
         }
 
@@ -106,24 +99,19 @@ func apiSyncSession(db *sql.DB) gin.HandlerFunc {
 
         body, err := ioutil.ReadAll(c.Request.Body)
         if err != nil {
-            abortApiRequest(c, http.StatusBadRequest, err)
+            abortApiRequest(c, http.StatusBadRequest, err.Error())
             return
         }
 
         sync := new(Sync)
         if err := json.Unmarshal(body, sync); err != nil {
-            abortApiRequest(c, http.StatusBadRequest, err)
-            return
-        }
-
-        if len(sync.SessionIndices) > 60 {
-            abortApiRequest(c, http.StatusRequestEntityTooLarge, err)
+            abortApiRequest(c, http.StatusBadRequest, err.Error())
             return
         }
 
         spectrums, err := dbSelectSessionSync(db, sessionName, sync)
         if err != nil {
-            abortApiRequest(c, http.StatusInternalServerError, err)
+            abortApiRequest(c, http.StatusInternalServerError, err.Error())
             return
         }
 
@@ -137,22 +125,22 @@ func apiAddSpectrum(db *sql.DB) gin.HandlerFunc {
 
         body, err := ioutil.ReadAll(c.Request.Body)
         if err != nil {
-            abortApiRequest(c, http.StatusBadRequest, err)
+            abortApiRequest(c, http.StatusBadRequest, err.Error())
             return
         }
 
         spec := new(Spectrum)
         if err := json.Unmarshal(body, spec); err != nil {
-            abortApiRequest(c, http.StatusInternalServerError, err)
+            abortApiRequest(c, http.StatusBadRequest, err.Error())
             return
         }
 
         if err := dbAddSpectrum(db, spec); err != nil {
-            abortApiRequest(c, http.StatusInternalServerError, err)
+            abortApiRequest(c, http.StatusInternalServerError, err.Error())
             return
         }
 
-        c.JSON(http.StatusOK, makeApiResponseMessage("Spectrum stored"))
+        c.JSON(http.StatusOK, gin.H{"message":"Spectrum added"})
     }
 }
 
@@ -176,19 +164,19 @@ func apiGetSpectrums(db *sql.DB) gin.HandlerFunc {
 
         dateBegin, err := time.Parse(dateFormat, strDateBegin)
         if err != nil {
-            abortApiRequest(c, http.StatusBadRequest, err)
+            abortApiRequest(c, http.StatusBadRequest, err.Error())
             return
         }
 
         dateEnd, err := time.Parse(dateFormat, strDateEnd)
         if err != nil {
-            abortApiRequest(c, http.StatusBadRequest, err)
+            abortApiRequest(c, http.StatusBadRequest, err.Error())
             return
         }
 
         spectrums, err := dbSelectSpectrums(db, sessionName, dateBegin, dateEnd)
         if err != nil {
-            abortApiRequest(c, http.StatusInternalServerError, err)
+            abortApiRequest(c, http.StatusInternalServerError, err.Error())
             return
         }
 
