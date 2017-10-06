@@ -33,6 +33,21 @@ func dbConnectionString(hostname, username, dbname string) string {
 	return fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable", hostname, username, dbname)
 }
 
+func dbValidateCredentials(db *sql.DB, user, pass string) (bool, error) {
+
+    rows, err := db.Query("select id from users where username = $1 and password = $2", user, pass)
+    if err != nil {
+        return false, err
+    }
+    defer rows.Close()
+
+    if !rows.Next() {
+        return false, nil
+    }
+
+    return true, nil
+}
+
 func dbSelectSessions(db *sql.DB) ([]string, error) {
 
 	rows, err := db.Query("select distinct session_name from spectrum order by session_name desc")

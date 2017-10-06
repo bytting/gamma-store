@@ -3,6 +3,18 @@ create database gs;
 
 \c gs;
 
+create sequence users_id;
+
+create table users (
+    id int not null default nextval('users_id'),
+    username varchar not null,
+    password varchar not null
+);
+
+alter sequence users_id owned by users.id;
+grant all privileges on table users to numsys;
+grant usage, select on sequence users_id to numsys;
+
 create sequence spectrum_id;
 
 create table spectrum (

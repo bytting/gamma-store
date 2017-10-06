@@ -22,10 +22,12 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+    "encoding/base64"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
+    "strings"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -40,6 +42,46 @@ func abortApiRequest(c *gin.Context, status int, err error) {
 func makeApiResponseMessage(msg string) gin.H {
 
 	return gin.H{"message": msg}
+}
+
+func checkCredentials(db *sql.DB) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+
+        items := strings.SplitN(c.Request.Header.Get("Authorization"), " ", 2)
+        if len(items) != 2 || items[0] != "Basic" {
+            log.Println("Malformed credentials")
+            c.JSON(http.StatusBadRequest, makeApiResponseMessage("Malformed credentials"))
+            c.Abort()
+            return
+        }
+
+        data, _ := base64.StdEncoding.DecodeString(items[1])
+        cred := strings.SplitN(string(data), ":", 2)
+        if len(cred) != 2 {
+            log.Println("Malformed credentials")
+            c.JSON(http.StatusBadRequest, makeApiResponseMessage("Malformed credentials"))
+            c.Abort()
+            return
+        }
+
+        valid, err := dbValidateCredentials(db, cred[0], cred[1])
+        if err != nil {
+            log.Println("Credential validation failed")
+            c.JSON(http.StatusInternalServerError, makeApiResponseMessage("Credential validation failed"))
+            c.Abort()
+            return
+        }
+
+        if !valid {
+            log.Println("Invalid credentials")
+            c.JSON(http.StatusUnauthorized, makeApiResponseMessage("Invalid credentials"))
+            c.Abort()
+            return
+        }
+
+        c.Next()
+    }
 }
 
 func apiGetSessions(db *sql.DB) gin.HandlerFunc {
@@ -168,14 +210,17 @@ func main() {
 
 	// gin.SetMode(gin.ReleaseMode)
 
-	r := gin.Default()
+	router := gin.Default()
+    root := router.Group("/")
+    root.Use(checkCredentials(db))
+    {
+        root.GET("/get-sessions", apiGetSessions(db))
+        root.POST("/sync-session/:session_name", apiSyncSession(db))
+        root.POST("/add-spectrum", apiAddSpectrum(db))
+        root.GET("/get-spectrums/:session_name", apiGetSpectrums(db))
+        root.GET("/get-spectrums/:session_name/:date_begin", apiGetSpectrums(db))
+        root.GET("/get-spectrums/:session_name/:date_begin/:date_end", apiGetSpectrums(db))
+    }
 
-	r.GET("/get-sessions", apiGetSessions(db))
-	r.POST("/sync-session/:session_name", apiSyncSession(db))
-	r.POST("/add-spectrum", apiAddSpectrum(db))
-	r.GET("/get-spectrums/:session_name", apiGetSpectrums(db))
-	r.GET("/get-spectrums/:session_name/:date_begin", apiGetSpectrums(db))
-	r.GET("/get-spectrums/:session_name/:date_begin/:date_end", apiGetSpectrums(db))
-
-	r.Run(":80")
+	router.Run(":80")
 }
