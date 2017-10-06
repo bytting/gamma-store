@@ -35,17 +35,17 @@ func dbConnectionString(hostname, username, dbname string) string {
 
 func dbValidateCredentials(db *sql.DB, user, pass string) (bool, error) {
 
-    rows, err := db.Query("select id from users where username = $1 and password = $2", user, pass)
-    if err != nil {
-        return false, err
-    }
-    defer rows.Close()
+	rows, err := db.Query("select id from users where username = $1 and password = $2", user, pass)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
 
-    if !rows.Next() {
-        return false, nil
-    }
+	if !rows.Next() {
+		return false, nil
+	}
 
-    return true, nil
+	return true, nil
 }
 
 func dbSelectSessions(db *sql.DB) ([]string, error) {
@@ -150,22 +150,22 @@ func dbInsertSpectrum(db *sql.DB, s *Spectrum) error {
 	}
 
 	sql_insert_spectrum := `
-		insert into spectrum (
-		session_name,
-		session_index,
-		start_time,
-		latitude,
-		longitude,
-		altitude,
-		track,
-		speed,
-		climb,
-		livetime,
-		realtime,
-		num_channels,
-		channels,
-		doserate
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+        insert into spectrum (
+        session_name,
+        session_index,
+        start_time,
+        latitude,
+        longitude,
+        altitude,
+        track,
+        speed,
+        climb,
+        livetime,
+        realtime,
+        num_channels,
+        channels,
+        doserate
+        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 
 	_, err = db.Exec(sql_insert_spectrum,
 		s.SessionName,
@@ -194,20 +194,20 @@ func dbUpdateSpectrum(db *sql.DB, s *Spectrum) error {
 	}
 
 	sql_update_spectrum := `
-		update spectrum set 		
-		start_time = $1,
-		latitude = $2,
-		longitude = $3,
-		altitude = $4,
-		track = $5,
-		speed = $6,
-		climb = $7,
-		livetime = $8,
-		realtime = $9,
-		num_channels = $10,
-		channels = $11,
-		doserate = $12 
-		where session_name = $13 and session_index = $14`
+        update spectrum set
+        start_time = $1,
+        latitude = $2,
+        longitude = $3,
+        altitude = $4,
+        track = $5,
+        speed = $6,
+        climb = $7,
+        livetime = $8,
+        realtime = $9,
+        num_channels = $10,
+        channels = $11,
+        doserate = $12
+        where session_name = $13 and session_index = $14`
 
 	_, err = db.Exec(sql_update_spectrum,
 		dateTime,
