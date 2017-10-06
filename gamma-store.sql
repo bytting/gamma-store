@@ -39,3 +39,4 @@ alter table spectrum alter column start_time set default now();
 
 grant all privileges on table spectrum to numsys;
 grant usage, select on sequence spectrum_id to numsys;
+

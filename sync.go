@@ -20,6 +20,7 @@
 package main
 
 type Sync struct {
-	SessionIndices []int `json:"session_indices"`
-	LastIndex      int   `json:"last_index"`
+    SessionIndices []int `json:"session_indices"`
+    LastIndex      int   `json:"last_index"`
 }
+

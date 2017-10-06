@@ -20,18 +20,19 @@
 package main
 
 type Spectrum struct {
-	SessionName  string  `json:"session_name"`
-	SessionIndex int     `json:"session_index"`
-	StartTime    string  `json:"start_time"`
-	Latitude     float64 `json:"latitude"`
-	Longitude    float64 `json:"longitude"`
-	Altitude     float64 `json:"altitude"`
-	Track        float64 `json:"track"`
-	Speed        float64 `json:"speed"`
-	Climb        float64 `json:"climb"`
-	Livetime     float64 `json:"livetime"`
-	Realtime     float64 `json:"realtime"`
-	NumChannels  int     `json:"num_channels"`
-	Channels     string  `json:"channels"`
-	Doserate     float64 `json:"doserate"`
+    SessionName  string  `json:"session_name"`
+    SessionIndex int     `json:"session_index"`
+    StartTime    string  `json:"start_time"`
+    Latitude     float64 `json:"latitude"`
+    Longitude    float64 `json:"longitude"`
+    Altitude     float64 `json:"altitude"`
+    Track        float64 `json:"track"`
+    Speed        float64 `json:"speed"`
+    Climb        float64 `json:"climb"`
+    Livetime     float64 `json:"livetime"`
+    Realtime     float64 `json:"realtime"`
+    NumChannels  int     `json:"num_channels"`
+    Channels     string  `json:"channels"`
+    Doserate     float64 `json:"doserate"`
 }
+
