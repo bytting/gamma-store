@@ -33,11 +33,16 @@ import (
     _ "github.com/lib/pq"
 )
 
+func makeStatusMessage(status int) gin.H {
+
+    return gin.H{"status":http.StatusText(status)}
+}
+
 func abortApiRequest(c *gin.Context, status int, msg string) {
 
-    c.JSON(status, gin.H{"status":status, "message":msg})
+    c.JSON(status, makeStatusMessage(status))
     c.Abort()
-    log.Printf("Abort request: %s\n", msg)
+    log.Printf("Abort API request: %s\n", msg)
 }
 
 func checkCredentials(db *sql.DB) gin.HandlerFunc {
@@ -140,7 +145,7 @@ func apiAddSpectrum(db *sql.DB) gin.HandlerFunc {
             return
         }
 
-        c.JSON(http.StatusOK, gin.H{"message":"Spectrum added"})
+        c.JSON(http.StatusOK, makeStatusMessage(http.StatusOK))
     }
 }
 
